@@ -12,8 +12,8 @@
 // This is how many previous bits are used to predict the next bit from the INM
 #define PREDICTION_BITS 14u
 
-// This is the maximum time we allow to pass to perform the I/O operations, since long
-// delays can reduce entropy from the INM.
+// This is the maximum time we allow to pass to perform the I/O operations,
+// since long delays can reduce entropy from the INM.
 #define MAX_MICROSEC_FOR_SAMPLES 5000u
 
 // This is the gain of each of the two op-amp stages in the INM
@@ -32,18 +32,19 @@
 
 // Structure for parsed command line options
 struct opt_struct {
-	uint32_t outputMultiplier; // We output all the entropy when outputMultiplier == 0
-	bool daemon;		// Run as daemon?
-	bool debug;		// Print debugging info?
-	bool devRandom;		// Feed /dev/random?
-	bool noOutput;		// Supress output?
-	bool listDevices;	// List possible USB-devices?
-	bool help;		// Show help
-	bool none;		// set to true when no valid arguments where detected
-	bool raw;		// No whitening?
-	bool version;		// Show version
-	char *pidFileName;	// Name of optional PID-file
-	char *serial;		// Name of selected device
+    uint32_t outputMultiplier; // We output all the entropy when
+                               // outputMultiplier == 0
+    bool daemon;               // Run as daemon?
+    bool debug;                // Print debugging info?
+    bool devRandom;            // Feed /dev/random?
+    bool noOutput;             // Supress output?
+    bool listDevices;          // List possible USB-devices?
+    bool help;                 // Show help
+    bool none;         // set to true when no valid arguments where detected
+    bool raw;          // No whitening?
+    bool version;      // Show version
+    char *pidFileName; // Name of optional PID-file
+    char *serial;      // Name of selected device
 };
 
 bool inmHealthCheckStart(uint8_t N, double K, struct opt_struct *opts);

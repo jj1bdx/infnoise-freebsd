@@ -14,14 +14,15 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #ifndef _KeccakPermutationInterface_h_
 #define _KeccakPermutationInterface_h_
 
-
 #define KeccakPermutationSize 1600
-#define KeccakPermutationSizeInBytes (KeccakPermutationSize/8)
+#define KeccakPermutationSizeInBytes (KeccakPermutationSize / 8)
 
 void KeccakInitialize(void);
 void KeccakInitializeState(unsigned char *state);
 void KeccakPermutation(unsigned char *state);
-void KeccakAbsorb(unsigned char *state, const unsigned char *data, unsigned int laneCount);
-void KeccakExtract(const unsigned char *state, unsigned char *data, unsigned int laneCount);
+void KeccakAbsorb(unsigned char *state, const unsigned char *data,
+                  unsigned int laneCount);
+void KeccakExtract(const unsigned char *state, unsigned char *data,
+                   unsigned int laneCount);
 
 #endif
