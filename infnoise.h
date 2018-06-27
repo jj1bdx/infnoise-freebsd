@@ -19,7 +19,8 @@
 // This is the gain of each of the two op-amp stages in the INM
 #define DESIGN_K 1.84
 
-#define BITMODE_SYNCBB 0x4
+// Already defined in ftdi.h
+// #define BITMODE_SYNCBB 0x4
 
 // This defines which pins on the FT240X are used
 #define COMP1 1u

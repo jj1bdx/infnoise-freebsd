@@ -8,7 +8,7 @@
 
 #include "infnoise.h"
 #include "KeccakF-1600-interface.h"
-#include <ftdi.h>
+#include "ftdi.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
