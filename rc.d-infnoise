@@ -1,5 +1,5 @@
 #!/bin/sh
-# Place this script as /usr/local/etc/rc.d/infnoise
+# $Id: infnoise,v 1.1 2018/06/28 02:45:21 root Exp $
 
 # PROVIDE: infnoise
 # REQUIRE: FILESYSTEMS
@@ -37,7 +37,7 @@ pidfile="${infnoise_pidfile}"
 
 infnoise_start() {
     echo -n "Starting infnoise: "
-    ${daemon} -p ${pidfile} ${command} --dev-trng --serial ${infnoise_serialno}
+    ${daemon} -p ${pidfile} ${command} --dev-trng --wait-time 5000 --serial ${infnoise_serialno}
     RETVAL=$?
     if [ $RETVAL = 0 ]; then
         echo "OK"
