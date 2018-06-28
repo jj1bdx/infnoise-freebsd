@@ -47,18 +47,17 @@ static uint32_t extractBytes(uint8_t *bytes, uint8_t *inBuf) {
     return inmGetEntropyLevel();
 }
 
-// Write the bytes to either stdout, or /dev/random.
-static void outputBytes(uint8_t *bytes, uint32_t length, uint32_t entropy,
+// Write the bytes to either stdout, or /dev/trng.
+static void outputBytes(uint8_t *bytes, uint32_t length, 
                         struct opt_struct *opts) {
-    if (!opts->devRandom) {
+    if (!opts->devTrng) {
         if (fwrite(bytes, 1, length, stdout) != length) {
             fputs("Unable to write output from Infinite Noise Multiplier\n",
                   stderr);
             exit(1);
         }
     } else {
-        inmWaitForPoolToHaveRoom();
-        inmWriteEntropyToPool(bytes, length, entropy);
+        inmWriteEntropyToPool(bytes, length);
     }
 }
 
@@ -77,7 +76,7 @@ static uint32_t processBytes(uint8_t *keccakState, uint8_t *bytes,
     }
     if (opts->raw) {
         // In raw mode, we just output raw data from the INM.
-        outputBytes(bytes, BUFLEN / 8u, entropy, opts);
+        outputBytes(bytes, BUFLEN / 8u, opts);
         return BUFLEN / 8u;
     }
     // Note that BUFLEN has to be less than 1600 by enough to make the sponge
@@ -93,7 +92,7 @@ static uint32_t processBytes(uint8_t *keccakState, uint8_t *bytes,
     if (opts->outputMultiplier == 0u) {
         // Output all the bytes of entropy we have
         KeccakExtract(keccakState, dataOut, (entropy + 63u) / 64u);
-        outputBytes(dataOut, entropy / 8u, entropy & 0x7u, opts);
+        outputBytes(dataOut, entropy / 8u, opts);
         return entropy / 8u;
     }
 
@@ -111,7 +110,7 @@ static uint32_t processBytes(uint8_t *keccakState, uint8_t *bytes,
         if (entropyThisTime > 8u * bytesToWrite) {
             entropyThisTime = 8u * bytesToWrite;
         }
-        outputBytes(dataOut, bytesToWrite, entropyThisTime, opts);
+        outputBytes(dataOut, bytesToWrite, opts);
         bytesWritten += bytesToWrite;
         numBits -= bytesToWrite * 8u;
         entropy -= entropyThisTime;
@@ -254,7 +253,7 @@ static bool initializeUSB(struct ftdi_context *ftdic, char **message,
 
 static void initOpts(struct opt_struct *opts) {
     opts->outputMultiplier = 0u;
-    opts->daemon = opts->debug = opts->devRandom = opts->noOutput =
+    opts->daemon = opts->debug = opts->devTrng = opts->noOutput =
         opts->listDevices = opts->raw = false;
     opts->version = false;
     opts->help = false;
@@ -283,8 +282,8 @@ int main(int argc, char **argv) {
             opts.raw = true;
         } else if (!strcmp(argv[xArg], "--debug")) {
             opts.debug = true;
-        } else if (!strcmp(argv[xArg], "--dev-random")) {
-            opts.devRandom = true;
+        } else if (!strcmp(argv[xArg], "--dev-trng")) {
+            opts.devTrng = true;
         } else if (!strcmp(argv[xArg], "--no-output")) {
             opts.noOutput = true;
         } else if (!strcmp(argv[xArg], "--multiplier") && xArg + 1 < argc) {
@@ -329,7 +328,7 @@ int main(int argc, char **argv) {
         fputs("Usage: infnoise [options]\n"
               "Options are:\n"
               "    --debug - turn on some debug output\n"
-              "    --dev-random - write entropy to /dev/random instead of "
+              "    --dev-trng - write entropy to /dev/trng instead of "
               "stdout\n"
               "    --raw - do not whiten the output\n"
               "    --multiplier <value> - write 256 bits * value for each 512 "
@@ -378,9 +377,9 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (!multiplierAssigned && opts.devRandom) {
+    if (!multiplierAssigned && opts.devTrng) {
         opts.outputMultiplier = 2u; // Don't throw away entropy when writing to
-                                    // /dev/random unless told to do so
+                                    // /dev/trng unless told to do so
     }
 
     if (opts.version) {
@@ -398,8 +397,8 @@ int main(int argc, char **argv) {
     // Optionally run in the background and optionally write a PID-file
     startDaemon(&opts);
 
-    if (opts.devRandom) {
-        inmWriteEntropyStart(BUFLEN / 8u, &opts);
+    if (opts.devTrng) {
+        inmWriteEntropyStart(&opts);
     }
 
     if (!inmHealthCheckStart(PREDICTION_BITS, DESIGN_K, &opts)) {

@@ -8,4 +8,3 @@ double inmHealthCheckEstimateEntropyPerBit(void);
 // Returns number of bytes of entropy added so far
 uint32_t inmGetEntropyLevel(void);
 void inmClearEntropyLevel(void);
-void inmWriteEntropyToPool(uint8_t bytes, uint32_t length, uint32_t entropy);

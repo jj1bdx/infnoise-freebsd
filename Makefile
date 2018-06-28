@@ -7,13 +7,12 @@ PROG=	infnoise-freebsd
 SRCS=	infnoise.c infnoise.h healthcheck.c writeentropy.c daemon.c KeccakF-1600-reference.c endianness.h
 MAN=
 
-INCLUDEFTDI = /usr/local/include/libftdi1
-
-CFLAGS+= -Wall -Wextra -Werror -std=c99 -O3 \
-		 -I/usr/local/include/libftdi1 \
-		 -DGIT_VERSION=\"$(GIT_VERSION)\"\
-		 -DGIT_COMMIT=\"$(GIT_COMMIT)\"\
-		 -DGIT_DATE=\"$(GIT_DATE)\"
+CFLAGS+= -Wall -Wextra -Werror -std=c99 \
+	-O3 -finline-functions \
+	-I/usr/local/include/libftdi1 \
+	-DGIT_VERSION=\"$(GIT_VERSION)\"\
+	-DGIT_COMMIT=\"$(GIT_COMMIT)\"\
+	-DGIT_DATE=\"$(GIT_DATE)\"
 
 LDFLAGS+= -L/usr/local/lib -lftdi -lusb -lm
 
