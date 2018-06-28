@@ -30,8 +30,6 @@ void inmWriteEntropyToPool(uint8_t *bytes, uint32_t length) {
         fprintf(stderr, "Write to /dev/trng failed\n");
         exit(1);
     }
-    if (inmDebug) {
-        printf("Writing %u bytes to /dev/trng, %lu bytes written\n",
-        length, wsize);
-    }
+    // printf("Writing %u bytes to /dev/trng, %lu bytes written\n",
+    //        length, wsize);
 }
