@@ -271,30 +271,33 @@ static double diffTime(struct timespec *start, struct timespec *end) {
 
 // getopt_long(3) options descriptor
 
-static struct option longopts[] = {{"raw", no_argument, NULL, 'r'},
-                                   {"debug", no_argument, NULL, 'D'},
-                                   {"dev-trng", no_argument, NULL, 't'},
-                                   {"no-output", no_argument, NULL, 'n'},
-                                   {"multiplier", required_argument, NULL, 'm'},
-                                   {"pidfile", required_argument, NULL, 'p'},
-                                   {"serial", required_argument, NULL, 's'},
-                                   {"daemon", no_argument, NULL, 'd'},
-                                   {"list-devices", no_argument, NULL, 'l'},
-                                   {"version", no_argument, NULL, 'v'},
-                                   {"help", no_argument, NULL, 'h'},
-                                   {NULL, 0, NULL, 0}};
+static struct option longopts[] = {
+    {"raw", no_argument, NULL, 'r'},
+    {"debug", no_argument, NULL, 'D'},
+    {"dev-trng", no_argument, NULL, 't'},
+    {"no-output", no_argument, NULL, 'n'},
+    {"multiplier", required_argument, NULL, 'm'},
+    {"pidfile", required_argument, NULL, 'p'},
+    {"serial", required_argument, NULL, 's'},
+    {"wait-time", required_argument, NULL, 'w'},
+    {"daemon", no_argument, NULL, 'd'},
+    {"list-devices", no_argument, NULL, 'l'},
+    {"version", no_argument, NULL, 'v'},
+    {"help", no_argument, NULL, 'h'},
+    {NULL, 0, NULL, 0}};
 
 int main(int argc, char **argv) {
     struct ftdi_context ftdic;
     struct opt_struct opts;
     int ch;
     bool multiplierAssigned = false;
+    bool waitTimeAssigned = false;
 
     initOpts(&opts);
 
     // Process arguments
-    while ((ch = getopt_long(argc, argv, "rDtnm:p:s:dlvh", longopts, NULL)) !=
-           -1) {
+    while ((ch = getopt_long(argc, argv, "rDtnm:p:s:w:dlvh",
+                    longopts, NULL)) != -1) {
         switch (ch) {
         case 'r':
             opts.raw = true;
@@ -331,6 +334,15 @@ int main(int argc, char **argv) {
                 return 1;
             }
             break;
+        case 'w':
+            waitTimeAssigned = true;
+            int tmpWaitTime = atoi(optarg);
+            if ((tmpWaitTime < 1) && (tmpWaitTime > 5000)) {
+                fputs("Wait time must be in the range between 1 to 5000 microseconds\n", stderr);
+                return 1;
+            }
+            opts.waitTime = tmpWaitTime;
+            break;
         case 'd':
             opts.daemon = true;
             break;
@@ -365,6 +377,7 @@ int main(int argc, char **argv) {
               "    -p, --pidfile <file> - write process ID to file\n"
               "    -d, --daemon - run in the background\n"
               "    -s, --serial <serial> - use specified device\n"
+              "    -w, --wait-time <microseconds> - set wait time per each USB polling (1~5000)\n"
               "    -l, --list-devices - list available devices\n"
               "    -v, --version - show version information\n"
               "    -h, --help - this help output\n",
@@ -406,6 +419,11 @@ int main(int argc, char **argv) {
     if (!multiplierAssigned && opts.devTrng) {
         opts.outputMultiplier = 2u; // Don't throw away entropy when writing to
                                     // /dev/trng unless told to do so
+    }
+
+    if (waitTimeAssigned == false) {
+        opts.waitTime = 0;
+        waitTimeAssigned = true;
     }
 
     if (opts.version) {
@@ -452,13 +470,11 @@ int main(int argc, char **argv) {
         outBuf[i] = i & 1 ? (1 << SWEN2) : (1 << SWEN1);
     }
 
-#if 0
-    struct timespec wait, wait2;
-    // 5 milliseconds
+    struct timespec wait;
     wait.tv_sec = 0;
-    wait.tv_nsec = 5000000L;
-#endif
-
+    wait.tv_nsec = (long)opts.waitTime * 1000L;
+    bool waitEnabled = (wait.tv_nsec > 0);
+    uint32_t maxTimeForSamples = MAX_MICROSEC_FOR_SAMPLES + opts.waitTime;
     uint64_t totalBytesWritten = 0u;
     while (true) {
         struct timespec start;
@@ -473,15 +489,16 @@ int main(int argc, char **argv) {
             return 1;
         }
 
-#if 0
-        nanosleep(&wait, &wait2);
-#endif
+        if (waitEnabled) {
+            nanosleep(&wait, NULL);
+        }
 
         struct timespec end;
         clock_gettime(CLOCK_REALTIME, &end);
         uint32_t us = diffTime(&start, &end);
         // fprintf(stderr, "us = %u\n", us);
-        if (us <= MAX_MICROSEC_FOR_SAMPLES) {
+
+        if (us <= maxTimeForSamples) {
             uint8_t bytes[BUFLEN / 8u];
             uint32_t entropy = extractBytes(bytes, inBuf);
             if (!opts.noOutput && inmHealthCheckOkToUseData() &&

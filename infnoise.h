@@ -20,9 +20,6 @@
 // This is the gain of each of the two op-amp stages in the INM
 #define DESIGN_K 1.84
 
-// Already defined in ftdi.h
-// #define BITMODE_SYNCBB 0x4
-
 // This defines which pins on the FT240X are used
 #define COMP1 1u
 #define COMP2 4u
@@ -36,6 +33,8 @@
 struct opt_struct {
     uint32_t outputMultiplier; // We output all the entropy when
                                // outputMultiplier == 0
+    uint32_t waitTime;         // Waiting time per USB polling
+                               // in microseconds
     bool daemon;               // Run as daemon?
     bool debug;                // Print debugging info?
     bool devTrng;              // Feed /dev/random?
