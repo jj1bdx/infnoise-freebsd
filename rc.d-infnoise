@@ -1,0 +1,63 @@
+#!/bin/sh
+# Place this script as /usr/local/etc/rc.d/infnoise
+
+# PROVIDE: infnoise
+# REQUIRE: FILESYSTEMS
+# BEFORE: random netif
+# KEYWORD: nojail shutdown
+
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# infnoise_enable (bool):   Set to NO by default.
+# Set it to YES to enable infnoise.
+#
+# infnoise_pidfile (string):
+#    name of pid file (default to /var/run/infnoise.pid)
+# infnoise_device (string):
+#    Required path to the infnoise source device
+#
+
+. /etc/rc.subr
+
+name="infnoise"
+rcvar="infnoise_enable"
+
+start_cmd="infnoise_start"
+stop_cmd="infnoise_stop"
+
+load_rc_config ${name}
+: ${infnoise_enable:="NO"}
+: ${infnoise_pidfile:="/var/run/${name}.pid"}
+: ${infnoise_serialno:=""}
+
+command="/usr/local/bin/infnoise-freebsd"
+daemon="/usr/sbin/daemon"
+pidfile="${infnoise_pidfile}"
+
+infnoise_start() {
+    echo -n "Starting infnoise: "
+    ${daemon} -p ${pidfile} ${command} --dev-trng --serial ${infnoise_serialno}
+    RETVAL=$?
+    if [ $RETVAL = 0 ]; then
+        echo "OK"
+    else
+        echo "FAILED"
+    fi
+    return  $RETVAL
+}
+
+infnoise_stop() {
+    echo -n "Stopping infnoise: "
+    kill -TERM `/bin/cat ${pidfile}`
+    RETVAL=$?
+    if [ $RETVAL = 0 ]; then
+        echo "OK"
+    else
+        echo "FAILED"
+    fi
+    return  $RETVAL
+}
+
+load_rc_config $name
+run_rc_command "$1"
