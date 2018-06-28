@@ -15,6 +15,7 @@
 // This is the maximum time we allow to pass to perform the I/O operations,
 // since long delays can reduce entropy from the INM.
 #define MAX_MICROSEC_FOR_SAMPLES 5000u
+// #define MAX_MICROSEC_FOR_SAMPLES 10000u // when adding sleep (up to 5ms)
 
 // This is the gain of each of the two op-amp stages in the INM
 #define DESIGN_K 1.84

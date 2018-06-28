@@ -426,6 +426,13 @@ int main(int argc, char **argv) {
         outBuf[i] = i & 1 ? (1 << SWEN2) : (1 << SWEN1);
     }
 
+#if 0
+    struct timespec wait, wait2;
+    // 5 milliseconds
+    wait.tv_sec = 0;
+    wait.tv_nsec = 5000000L;
+#endif
+        
     uint64_t totalBytesWritten = 0u;
     while (true) {
         struct timespec start;
@@ -439,9 +446,15 @@ int main(int argc, char **argv) {
             fputs("USB read failed\n", stderr);
             return 1;
         }
+
+#if 0
+        nanosleep(&wait, &wait2);
+#endif
+
         struct timespec end;
         clock_gettime(CLOCK_REALTIME, &end);
         uint32_t us = diffTime(&start, &end);
+        // fprintf(stderr, "us = %u\n", us);
         if (us <= MAX_MICROSEC_FOR_SAMPLES) {
             uint8_t bytes[BUFLEN / 8u];
             uint32_t entropy = extractBytes(bytes, inBuf);
